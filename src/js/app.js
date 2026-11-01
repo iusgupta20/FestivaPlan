@@ -120,7 +120,7 @@ function syncHeaderData() {
 
 function setupThemeToggle() {
   const toggleBtn = document.querySelector('#btn-theme-toggle');
-  const currentTheme = localStorage.getItem('festivaplan_theme') || 'dark';
+  const currentTheme = localStorage.getItem('festivaplan_theme') || 'light';
 
   document.documentElement.setAttribute('data-theme', currentTheme);
   updateThemeIcon(toggleBtn, currentTheme);

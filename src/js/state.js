@@ -17,7 +17,7 @@ export const EVENT_PRESETS = {
     guestCount: 250,
     vibe: 'Regal Heritage meets Contemporary Luxury',
     themeDescription: 'Marigold sunset palette with warm ambient brass lanterns, live acoustic Sufi melodies, and royal Rajasthani banquet hospitality.',
-    colorPalette: ['#C5A059', '#8B1E3F', '#F4E8C1', '#2C1B4D', '#E07A5F'],
+    colorPalette: ['#FFFFFF', '#10B981', '#F59E0B', '#EF4444', '#38BDF8', '#8B5CF6', '#F97316', '#92400E'],
     budgetItems: [
       { id: 'b-1', category: 'Venue & Banquet', target: 950000, actual: 980000, priority: 'High', flexibility: 'Low', notes: 'Heritage courtyard + lakeside lawn hold' },
       { id: 'b-2', category: 'Catering & Dining', target: 600000, actual: 630000, priority: 'High', flexibility: 'Medium', notes: 'Multi-course vegetarian & regional delicacies' },
