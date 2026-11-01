@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FestivaPlan AI — GenAI Celebration & Intelligent Event Execution Assistant</title>
+  <meta name="description" content="GenAI-powered celebration and event planning assistant for weddings, birthdays, and community festivals with dynamic budget trade-offs, vendor utility scoring, and personalized timelines.">
+  <meta name="keywords" content="event planner, wedding planner, celebration assistant, GenAI event planning, budget tradeoff, vendor coordination">
+  <meta name="author" content="Ayush Gupta">
+  
+  <!-- Open Graph / Social Meta -->
+  <meta property="og:title" content="FestivaPlan AI — GenAI Celebration & Event Planner">
+  <meta property="og:description" content="Move from inspiration to execution: dynamic budget tradeoffs, vendor scoring, and personalized timelines for unforgettable celebrations.">
+  <meta property="og:type" content="website">
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+
+  <!-- Core Stylesheet -->
+  <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <header class="site-header" role="banner">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <span class="brand-logo-sparkle" aria-hidden="true">✨</span>
+        <div>
+          <a href="#" class="brand-title" id="brand-logo-link">FestivaPlan AI</a>
+          <span class="brand-badge">Challenge 5</span>
+        </div>
+      </div>
+
+      <div class="header-active-meta" aria-label="Active Event Quick Info">
+        <span class="header-title-text" id="header-event-title">Aarav & Meera’s Royal Sangeet & Palace Wedding</span>
+        <span class="header-pill pill-success" id="header-budget-pill"><strong>₹25,00,000</strong> Cap</span>
+        <span class="header-pill pill-neutral" id="header-countdown-pill">⏳ 47d to event</span>
+      </div>
+
+      <div class="header-actions-group">
+        <span class="badge badge-teal" id="header-ai-status-badge">🧠 Cognitive AI Ready</span>
+        <button class="btn btn-ghost btn-sm" id="btn-open-api-modal" title="Gemini API Key Settings" aria-label="Configure Gemini API Key">
+          ⚙️ AI Config
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-open-export-modal" title="Export & Backup" aria-label="Export or Restore Event Backup">
+          💾 Export
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-theme-toggle" title="Toggle Theme" aria-label="Toggle Dark and Light Mode">
+          ☀️
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="site-nav-bar" role="navigation" aria-label="Main Navigation">
+    <div class="nav-container" role="tablist">
+      <button class="nav-tab active" data-tab="blueprint" id="tab-blueprint" role="tab" aria-selected="true" aria-controls="main-content">
+        <span>🌟</span> Event Blueprint & AI
+      </button>
+      <button class="nav-tab" data-tab="budget" id="tab-budget" role="tab" aria-selected="false" aria-controls="main-content">
+        <span>💰</span> Budget & Tradeoffs
+      </button>
+      <button class="nav-tab" data-tab="vendor" id="tab-vendor" role="tab" aria-selected="false" aria-controls="main-content">
+        <span>🤝</span> Vendor Coordination
+      </button>
+      <button class="nav-tab" data-tab="timeline" id="tab-timeline" role="tab" aria-selected="false" aria-controls="main-content">
+        <span>⏱️</span> Timeline & Priority
+      </button>
+      <button class="nav-tab" data-tab="guests" id="tab-guests" role="tab" aria-selected="false" aria-controls="main-content">
+        <span>👥</span> Guests & Inclusivity
+      </button>
+      <button class="nav-tab" data-tab="copilot" id="tab-copilot" role="tab" aria-selected="false" aria-controls="main-content">
+        <span>🤖</span> AI Event Copilot
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Dynamic Application Container -->
+  <main id="main-content" class="main-wrapper" role="main" aria-live="polite">
+    <!-- Rendered dynamically by app.js -->
+  </main>
+
+  <!-- Modal: Google Gemini API Key Settings -->
+  <dialog class="festiva-modal" id="modal-api-key" aria-labelledby="modal-api-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-api-title">⚙️ Google Gemini GenAI Configuration</h3>
+        <button class="btn-modal-close" id="btn-close-api-modal" aria-label="Close API Modal">✕</button>
+      </div>
+      <form id="form-api-key" class="modal-form">
+        <p class="section-desc">
+          FestivaPlan AI features a <strong>Zero-Failure Dual Architecture</strong>. It runs 100% offline using its built-in Cognitive Rule Engine, or connects to live Google Gemini 1.5/2.0 Flash when an API key is provided.
+        </p>
+        <div class="form-group" style="margin-top: 1rem;">
+          <label for="input-gemini-key">Google Gemini API Key (Optional):</label>
+          <input type="password" id="input-gemini-key" class="form-input" placeholder="AIzaSy..." autocomplete="off">
+          <small class="text-muted" style="display: block; margin-top: 0.35rem;">
+            🔒 Stored only in browser <code>sessionStorage</code>. Never persisted to disk, database, or git repository.
+          </small>
+        </div>
+        <div id="api-test-status" style="margin-bottom: 0.85rem; font-size: 0.85rem;"></div>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+          <button type="button" class="btn btn-outline btn-sm" id="btn-test-api-key">
+            🧪 Test Live Connection
+          </button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-clear-api-key">
+            Clear Key (Offline Mode)
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save & Apply</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Modal: Export & Persistence -->
+  <dialog class="festiva-modal" id="modal-export" aria-labelledby="modal-export-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-export-title">💾 Export, Backup & Run-Sheet Printing</h3>
+        <button class="btn-modal-close" id="btn-close-export-modal" aria-label="Close Export Modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="section-desc">Download complete celebration blueprints or print physical binder run-sheets for on-site production teams.</p>
+        <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-top: 1.25rem;">
+          <button class="btn btn-primary" id="btn-print-modal-runsheet">
+            🖨️ Print Master Production Run-Sheet (PDF)
+          </button>
+          <button class="btn btn-secondary" id="btn-export-json">
+            📥 Download Complete Project JSON Backup
+          </button>
+          <div style="border-top: 1px solid var(--border-subtle); padding-top: 0.85rem; margin-top: 0.5rem;">
+            <label for="file-import-json" style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.35rem;">
+              Restore From JSON Backup:
+            </label>
+            <input type="file" id="file-import-json" accept=".json" class="form-input">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-close-export-dialog" onclick="document.querySelector('#modal-export').close()">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Application Bootstrap Script -->
+  <script type="module" src="/src/js/app.js"></script>
+</body>
+</html>

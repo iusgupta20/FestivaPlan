@@ -1,0 +1,26 @@
+{
+  "name": "festivaplan-ai",
+  "version": "1.0.0",
+  "description": "GenAI-Powered Celebration & Event Planner for Weddings, Birthdays & Community Festivals with dynamic budget tradeoffs, vendor scoring, and personalized timelines.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [
+    "genai",
+    "event-planner",
+    "celebration-planner",
+    "budget-tradeoff",
+    "vendor-coordination",
+    "gemini-ai",
+    "smart-assistant"
+  ],
+  "author": "Ayush Gupta",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^6.0.7"
+  }
+}
