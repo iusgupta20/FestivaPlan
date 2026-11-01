@@ -9,6 +9,7 @@ export function setupExportModal() {
   const modal = document.querySelector('#modal-export');
   const openBtn = document.querySelector('#btn-open-export-modal');
   const closeBtn = document.querySelector('#btn-close-export-modal');
+  const dialogCloseBtn = document.querySelector('#btn-close-export-dialog');
   const btnExportJson = document.querySelector('#btn-export-json');
   const fileInputJson = document.querySelector('#file-import-json');
   const btnPrintRunSheet = document.querySelector('#btn-print-modal-runsheet');
@@ -17,6 +18,7 @@ export function setupExportModal() {
 
   if (openBtn) openBtn.addEventListener('click', () => modal.showModal());
   if (closeBtn) closeBtn.addEventListener('click', () => modal.close());
+  if (dialogCloseBtn) dialogCloseBtn.addEventListener('click', () => modal.close());
 
   if (btnExportJson) {
     btnExportJson.addEventListener('click', () => {

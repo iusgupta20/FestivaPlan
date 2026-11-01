@@ -2,20 +2,31 @@
  * FestivaPlan AI - Vendor Coordination & Quotation Matrix View
  * Features multi-attribute utility comparison, AI contract evaluation badges,
  * status workflows, and automated vendor RFP generation.
+ *
+ * @module components/vendorView
  */
 
 import { eventState } from '../state.js';
 import { scoreVendorQuotation, generateVendorRFP } from '../vendorScorer.js';
+import { escapeHtml } from '../utils/sanitize.js';
+import { validateVendorProposal } from '../utils/validator.js';
 
 let activeCategoryFilter = 'all';
 
+/**
+ * Renders the vendor comparison and coordination matrix
+ * @param {HTMLElement} container
+ */
 export function renderVendorView(container) {
+  if (!container) return;
+
   const state = eventState.getState();
-  const cur = state.currency || '$';
+  const cur = escapeHtml(state.currency || '$');
   const vendors = state.vendors || [];
 
-  // Extract unique categories
-  const categories = ['all', ...new Set(vendors.map(v => v.category))];
+  // Extract unique categories safely
+  const rawCategories = Array.from(new Set(vendors.map(v => v.category).filter(Boolean)));
+  const categories = ['all', ...rawCategories];
 
   const filteredVendors = activeCategoryFilter === 'all'
     ? vendors
@@ -27,32 +38,35 @@ export function renderVendorView(container) {
       <section class="section-card vendor-header-card" aria-labelledby="vendor-title">
         <div class="section-header">
           <div class="header-left">
-            <span class="section-icon">🤝</span>
+            <span class="section-icon" aria-hidden="true">🤝</span>
             <div>
               <h2 id="vendor-title">Vendor Coordination & Quotation Comparison Matrix</h2>
               <p class="section-desc">Evaluate proposals using our Multi-Attribute Utility scoring engine (Quality vs Price vs Flexibility vs Perks). Compare terms side-by-side.</p>
             </div>
           </div>
-          <button class="btn btn-primary btn-sm" id="btn-open-add-vendor-modal">
+          <button class="btn btn-primary btn-sm" id="btn-open-add-vendor-modal" aria-label="Add New Vendor Proposal">
             <span>➕</span> Add Vendor Proposal
           </button>
         </div>
 
         <!-- Category Filter Pills -->
         <div class="filter-pills-bar" role="tablist" aria-label="Vendor Categories">
-          ${categories.map(cat => `
-            <button class="filter-pill ${activeCategoryFilter === cat ? 'active' : ''}" data-cat="${cat}">
-              ${cat === 'all' ? 'All Partners (' + vendors.length + ')' : cat}
-            </button>
-          `).join('')}
+          ${categories.map(cat => {
+            const label = cat === 'all' ? `All Partners (${vendors.length})` : cat;
+            return `
+              <button class="filter-pill ${activeCategoryFilter === cat ? 'active' : ''}" data-cat="${escapeHtml(cat)}" role="tab" aria-selected="${activeCategoryFilter === cat}">
+                ${escapeHtml(label)}
+              </button>
+            `;
+          }).join('')}
         </div>
       </section>
 
       <!-- Vendor Cards Grid -->
-      <div class="vendor-cards-grid" id="vendor-cards-grid">
+      <div class="vendor-cards-grid" id="vendor-cards-grid" aria-live="polite">
         ${filteredVendors.length === 0 ? `
           <div class="empty-state">
-            <span class="empty-icon">📂</span>
+            <span class="empty-icon" aria-hidden="true">📂</span>
             <h4>No vendors found in this category.</h4>
             <p>Click "Add Vendor Proposal" above to compare a new quote.</p>
           </div>
@@ -62,24 +76,32 @@ export function renderVendorView(container) {
           const targetBudget = budgetItem ? (Number(budgetItem.target) || vendor.quoteAmount) : vendor.quoteAmount;
           const scoreData = scoreVendorQuotation(vendor, targetBudget, vendors);
 
+          const safeId = escapeHtml(vendor.id);
+          const safeCategory = escapeHtml(vendor.category);
+          const safeName = escapeHtml(vendor.name);
+          const safeDeliverables = escapeHtml(vendor.deliverables || 'Standard event coverage');
+          const safePerks = escapeHtml(vendor.perks || 'Standard package terms');
+          const safePolicy = escapeHtml(vendor.cancellationPolicy || 'Standard contract terms');
+          const safeRecommendation = escapeHtml(scoreData.recommendation || '');
+
           return `
-            <div class="vendor-card glassmorphism" data-id="${vendor.id}">
+            <div class="vendor-card glassmorphism" data-id="${safeId}">
               <div class="vendor-card-header">
                 <div class="vendor-title-wrap">
-                  <span class="vendor-category-badge">${vendor.category}</span>
-                  <h3 class="vendor-name">${vendor.name}</h3>
-                  <div class="vendor-rating-row">
-                    <span class="stars">${renderStars(vendor.rating)}</span>
+                  <span class="vendor-category-badge">${safeCategory}</span>
+                  <h3 class="vendor-name">${safeName}</h3>
+                  <div class="vendor-rating-row" aria-label="Rating: ${vendor.rating} out of 5 stars">
+                    <span class="stars" aria-hidden="true">${renderStars(vendor.rating)}</span>
                     <strong class="rating-number">${vendor.rating}</strong>
                     <span class="rating-sub">/ 5.0</span>
                   </div>
                 </div>
                 <div class="vendor-score-box">
-                  <div class="utility-score-circle">
+                  <div class="utility-score-circle" aria-label="AI Utility Score ${scoreData.compositeScore} out of 100">
                     <span class="score-number">${scoreData.compositeScore}</span>
                     <span class="score-label">AI Score</span>
                   </div>
-                  <span class="badge ${scoreData.badgeClass}">${scoreData.badge}</span>
+                  <span class="badge ${escapeHtml(scoreData.badgeClass)}">${escapeHtml(scoreData.badge)}</span>
                 </div>
               </div>
 
@@ -101,29 +123,29 @@ export function renderVendorView(container) {
               <div class="vendor-details-block">
                 <div class="detail-row">
                   <strong>📦 Scope & Deliverables:</strong>
-                  <p>${vendor.deliverables || 'Standard event coverage'}</p>
+                  <p>${safeDeliverables}</p>
                 </div>
                 <div class="detail-row">
                   <strong>🎁 Bonus Perks:</strong>
-                  <p class="text-teal">${vendor.perks || 'Standard package terms'}</p>
+                  <p class="text-teal">${safePerks}</p>
                 </div>
                 <div class="detail-row">
                   <strong>📜 Cancellation & Rescheduling:</strong>
-                  <p class="text-muted">${vendor.cancellationPolicy || 'Standard contract terms'}</p>
+                  <p class="text-muted">${safePolicy}</p>
                 </div>
               </div>
 
               <!-- AI Analysis Justification -->
               <div class="vendor-ai-rationale">
                 <strong>🤖 AI Assessment:</strong>
-                <p>${scoreData.recommendation}</p>
+                <p>${safeRecommendation}</p>
               </div>
 
               <!-- Status & Actions Bar -->
               <div class="vendor-card-actions">
                 <div class="status-select-wrap">
-                  <label for="vendor-status-${vendor.id}">Status:</label>
-                  <select id="vendor-status-${vendor.id}" class="form-select form-select-sm vendor-status-select" data-id="${vendor.id}">
+                  <label for="vendor-status-${safeId}">Status:</label>
+                  <select id="vendor-status-${safeId}" class="form-select form-select-sm vendor-status-select" data-id="${safeId}">
                     <option value="Contacted" ${vendor.status === 'Contacted' ? 'selected' : ''}>⏳ Contacted</option>
                     <option value="Shortlisted" ${vendor.status === 'Shortlisted' ? 'selected' : ''}>⭐ Shortlisted</option>
                     <option value="Confirmed" ${vendor.status === 'Confirmed' ? 'selected' : ''}>✅ Confirmed</option>
@@ -131,10 +153,10 @@ export function renderVendorView(container) {
                   </select>
                 </div>
                 <div class="btn-group">
-                  <button class="btn btn-outline btn-sm btn-generate-rfp" data-id="${vendor.id}" title="Generate Formal RFP Inquiry">
+                  <button class="btn btn-outline btn-sm btn-generate-rfp" data-id="${safeId}" title="Generate Formal RFP Inquiry" aria-label="Generate RFP for ${safeName}">
                     <span>✉️</span> Generate RFP
                   </button>
-                  <button class="btn btn-ghost btn-sm btn-delete-vendor" data-id="${vendor.id}" title="Remove Vendor">
+                  <button class="btn btn-ghost btn-sm btn-delete-vendor" data-id="${safeId}" title="Remove Vendor" aria-label="Delete vendor ${safeName}">
                     🗑️
                   </button>
                 </div>
@@ -146,17 +168,17 @@ export function renderVendorView(container) {
     </div>
 
     <!-- Modal: Add Vendor Proposal -->
-    <dialog class="festiva-modal" id="modal-add-vendor">
+    <dialog class="festiva-modal" id="modal-add-vendor" aria-labelledby="modal-add-vendor-title">
       <div class="modal-box">
         <div class="modal-header">
-          <h3>➕ Add Vendor Quotation for Comparison</h3>
-          <button class="btn-modal-close" id="btn-close-vendor-modal">✕</button>
+          <h3 id="modal-add-vendor-title">➕ Add Vendor Quotation for Comparison</h3>
+          <button class="btn-modal-close" id="btn-close-vendor-modal" aria-label="Close Vendor Modal">✕</button>
         </div>
         <form id="form-add-vendor" class="modal-form">
           <div class="form-group">
             <label for="new-vendor-category">Service Category:</label>
             <select id="new-vendor-category" class="form-select" required>
-              ${(state.budgetItems || []).map(b => `<option value="${b.category}">${b.category}</option>`).join('')}
+              ${(state.budgetItems || []).map(b => `<option value="${escapeHtml(b.category)}">${escapeHtml(b.category)}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
@@ -200,15 +222,15 @@ export function renderVendorView(container) {
     </dialog>
 
     <!-- Modal: View & Copy RFP -->
-    <dialog class="festiva-modal" id="modal-view-rfp">
+    <dialog class="festiva-modal" id="modal-view-rfp" aria-labelledby="modal-rfp-title">
       <div class="modal-box modal-box-large">
         <div class="modal-header">
-          <h3>✉️ AI-Generated Formal Vendor RFP / Outreach Message</h3>
-          <button class="btn-modal-close" id="btn-close-rfp-modal">✕</button>
+          <h3 id="modal-rfp-title">✉️ AI-Generated Formal Vendor RFP / Outreach Message</h3>
+          <button class="btn-modal-close" id="btn-close-rfp-modal" aria-label="Close RFP Modal">✕</button>
         </div>
         <div class="modal-body">
           <p class="modal-desc">This formal Request for Proposal is pre-filled with your event's exact date, guest count, dietary notes, and contractual expectations.</p>
-          <textarea id="rfp-content-text" class="code-box form-textarea" rows="14" readonly></textarea>
+          <textarea id="rfp-content-text" class="code-box form-textarea" rows="14" readonly aria-label="Generated RFP Content"></textarea>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="btn-cancel-rfp-modal">Close</button>
@@ -270,7 +292,9 @@ export function renderVendorView(container) {
       navigator.clipboard.writeText(rfpTextArea.value).then(() => {
         showToast('📋 RFP copied to clipboard!');
         copyRfpBtn.textContent = '✅ Copied!';
-        setTimeout(() => copyRfpBtn.textContent = '📋 Copy RFP to Clipboard', 2000);
+        setTimeout(() => {
+          copyRfpBtn.textContent = '📋 Copy RFP to Clipboard';
+        }, 2000);
       });
     });
   }
@@ -306,6 +330,12 @@ export function renderVendorView(container) {
         status: 'Contacted'
       };
 
+      const validation = validateVendorProposal(newVendor);
+      if (!validation.valid) {
+        alert(validation.errors.join('\n'));
+        return;
+      }
+
       eventState.addVendor(newVendor);
       addModal.close();
       addForm.reset();
@@ -315,16 +345,27 @@ export function renderVendorView(container) {
   }
 }
 
+/**
+ * Generates star glyphs for visual ratings
+ * @param {number} rating
+ * @returns {string}
+ */
 function renderStars(rating) {
   const full = Math.floor(rating);
   const half = rating - full >= 0.5 ? 1 : 0;
-  const empty = 5 - full - half;
+  const empty = Math.max(0, 5 - full - half);
   return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
 }
 
+/**
+ * Displays accessible transient notification toast
+ * @param {string} msg
+ */
 function showToast(msg) {
   const toast = document.createElement('div');
   toast.className = 'festiva-toast animate-slide-up';
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
   toast.textContent = msg;
   document.body.appendChild(toast);
   setTimeout(() => {

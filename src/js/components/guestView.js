@@ -6,8 +6,10 @@
 
 import { eventState } from '../state.js';
 import { analyzeGuestDemographicsAndDietary } from '../guestManager.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 export function renderGuestView(container) {
+  if (!container) return;
   const state = eventState.getState();
   const guests = state.guests || {};
   const analysis = analyzeGuestDemographicsAndDietary(guests);
@@ -35,7 +37,7 @@ export function renderGuestView(container) {
           <div class="rsvp-stat-box stat-confirmed">
             <span class="rsvp-stat-label">Confirmed Attending</span>
             <div class="rsvp-stat-num text-success">${analysis.confirmedGuests}</div>
-            <span class="rsvp-stat-hint">${((analysis.confirmedGuests / analysis.totalGuests) * 100).toFixed(0)}% RSVP response rate</span>
+            <span class="rsvp-stat-hint">${((analysis.confirmedGuests / (analysis.totalGuests || 1)) * 100).toFixed(0)}% RSVP response rate</span>
           </div>
           <div class="rsvp-stat-box stat-pending">
             <span class="rsvp-stat-label">Pending Response</span>
@@ -64,17 +66,20 @@ export function renderGuestView(container) {
 
         <!-- Dietary Distribution Bars -->
         <div class="dietary-pills-grid">
-          ${analysis.dietaryEntries.map(entry => `
-            <div class="dietary-pill-card">
-              <div class="dietary-pill-header">
-                <strong>${entry.type}</strong>
-                <span class="dietary-badge">${entry.count} Guests (${entry.percent}%)</span>
+          ${analysis.dietaryEntries.map(entry => {
+            const safeType = escapeHtml(entry.type);
+            return `
+              <div class="dietary-pill-card">
+                <div class="dietary-pill-header">
+                  <strong>${safeType}</strong>
+                  <span class="dietary-badge">${entry.count} Guests (${entry.percent}%)</span>
+                </div>
+                <div class="dietary-bar-track" role="progressbar" aria-valuenow="${entry.percent}" aria-valuemin="0" aria-valuemax="100" aria-label="${safeType} dietary proportion">
+                  <div class="dietary-bar-fill" style="width: ${Math.min(100, entry.percent * 1.5)}%"></div>
+                </div>
               </div>
-              <div class="dietary-bar-track">
-                <div class="dietary-bar-fill" style="width: ${Math.min(100, entry.percent * 1.5)}%"></div>
-              </div>
-            </div>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
 
         <!-- Kitchen Compliance Alerts -->
@@ -82,15 +87,20 @@ export function renderGuestView(container) {
           <h4 class="kitchen-alerts-title">👨‍🍳 Chef & Kitchen Operational Directives:</h4>
           ${analysis.kitchenDirectives.length === 0 ? `
             <p class="text-muted">No high-risk allergen warnings identified.</p>
-          ` : analysis.kitchenDirectives.map(dir => `
-            <div class="alert-box ${dir.severity === 'CRITICAL' ? 'alert-danger' : dir.severity === 'HIGH' ? 'alert-warning' : 'alert-teal'}">
-              <div class="alert-box-icon">${dir.severity === 'CRITICAL' ? '🚨' : '⚠️'}</div>
-              <div class="alert-box-content">
-                <strong>[${dir.severity}] ${dir.title}</strong>
-                <p>${dir.description}</p>
+          ` : analysis.kitchenDirectives.map(dir => {
+            const safeSeverity = escapeHtml(dir.severity);
+            const safeTitle = escapeHtml(dir.title);
+            const safeDesc = escapeHtml(dir.description);
+            return `
+              <div class="alert-box ${dir.severity === 'CRITICAL' ? 'alert-danger' : dir.severity === 'HIGH' ? 'alert-warning' : 'alert-teal'}" role="alert">
+                <div class="alert-box-icon" aria-hidden="true">${dir.severity === 'CRITICAL' ? '🚨' : '⚠️'}</div>
+                <div class="alert-box-content">
+                  <strong>[${safeSeverity}] ${safeTitle}</strong>
+                  <p>${safeDesc}</p>
+                </div>
               </div>
-            </div>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
       </section>
 
@@ -109,7 +119,7 @@ export function renderGuestView(container) {
         <div class="inclusivity-grid">
           <div class="inclusivity-item-box">
             <div class="inclusivity-title-row">
-              <span class="inc-icon">👵</span>
+              <span class="inc-icon" aria-hidden="true">👵</span>
               <div>
                 <strong>Seniors & Elders (${guests.demographics?.seniors || 0} Attending)</strong>
                 <p>Comfort and physical accessibility checklist</p>
@@ -117,15 +127,15 @@ export function renderGuestView(container) {
             </div>
             <div class="inc-checkbox-list">
               <label class="inc-checkbox-label">
-                <input type="checkbox" id="chk-wheelchair" ${guests.accommodations?.wheelchairRamp ? 'checked' : ''}>
+                <input type="checkbox" id="chk-wheelchair" ${guests.accommodations?.wheelchairRamp ? 'checked' : ''} aria-label="Wheelchair Access Ramps">
                 <span>Wheelchair Access Ramps (Min 1:12 incline ratio)</span>
               </label>
               <label class="inc-checkbox-label">
-                <input type="checkbox" id="chk-quiet-lounge" ${guests.accommodations?.seniorQuietLounge ? 'checked' : ''}>
+                <input type="checkbox" id="chk-quiet-lounge" ${guests.accommodations?.seniorQuietLounge ? 'checked' : ''} aria-label="Dedicated Low-Decibel Quiet Lounge Seating">
                 <span>Dedicated Low-Decibel Quiet Lounge Seating</span>
               </label>
               <label class="inc-checkbox-label">
-                <input type="checkbox" id="chk-shuttle" ${guests.accommodations?.golfCartShuttle ? 'checked' : ''}>
+                <input type="checkbox" id="chk-shuttle" ${guests.accommodations?.golfCartShuttle ? 'checked' : ''} aria-label="Golf Cart / Valet Shuttle from Arrival Gate">
                 <span>Golf Cart / Valet Shuttle from Arrival Gate</span>
               </label>
             </div>
@@ -133,7 +143,7 @@ export function renderGuestView(container) {
 
           <div class="inclusivity-item-box">
             <div class="inclusivity-title-row">
-              <span class="inc-icon">👶</span>
+              <span class="inc-icon" aria-hidden="true">👶</span>
               <div>
                 <strong>Children & Infants (${(guests.demographics?.children || 0) + (guests.demographics?.infants || 0)} Attending)</strong>
                 <p>Family hospitality and childcare safeguards</p>
@@ -141,15 +151,15 @@ export function renderGuestView(container) {
             </div>
             <div class="inc-checkbox-list">
               <label class="inc-checkbox-label">
-                <input type="checkbox" id="chk-kids-zone" ${guests.accommodations?.kidActivityZone ? 'checked' : ''}>
+                <input type="checkbox" id="chk-kids-zone" ${guests.accommodations?.kidActivityZone ? 'checked' : ''} aria-label="Soft-Play Mat & Craft Activity Corner">
                 <span>Soft-Play Mat & Craft Activity Corner</span>
               </label>
               <label class="inc-checkbox-label">
-                <input type="checkbox" id="chk-lactation" ${guests.accommodations?.lactationRoom ? 'checked' : ''}>
+                <input type="checkbox" id="chk-lactation" ${guests.accommodations?.lactationRoom ? 'checked' : ''} aria-label="Private Nursing & Diaper Changing Facility">
                 <span>Private Nursing & Diaper Changing Facility</span>
               </label>
               <label class="inc-checkbox-label">
-                <input type="checkbox" id="chk-kids-menu" checked>
+                <input type="checkbox" id="chk-kids-menu" checked aria-label="Kid-Friendly Finger Buffet & Fruit Purees">
                 <span>Kid-Friendly Finger Buffet & Fruit Purees</span>
               </label>
             </div>
@@ -173,21 +183,21 @@ export function renderGuestView(container) {
           <div class="weather-plan-col">
             <div class="plan-badge-tag tag-success">PLAN A: Primary Layout</div>
             <h4>Outdoor & Lawn Execution</h4>
-            <p>${analysis.weatherAction.planA}</p>
+            <p>${escapeHtml(analysis.weatherAction.planA)}</p>
             <span class="weather-status">Active baseline configuration</span>
           </div>
 
           <div class="weather-plan-col">
             <div class="plan-badge-tag tag-warning">PLAN B: Weather Backup</div>
             <h4>Rain / Storm Ballroom Hold</h4>
-            <p>${analysis.weatherAction.planB_rain}</p>
+            <p>${escapeHtml(analysis.weatherAction.planB_rain)}</p>
             <span class="weather-status">Tentatively reserved with venue manager</span>
           </div>
 
           <div class="weather-plan-col">
             <div class="plan-badge-tag tag-purple">DECISION TRIGGER</div>
             <h4>Cut-off Milestone</h4>
-            <p><strong>${analysis.weatherAction.decisionDeadline}</strong></p>
+            <p><strong>${escapeHtml(analysis.weatherAction.decisionDeadline)}</strong></p>
             <span class="weather-status">Threshold: >35% precipitation probability</span>
           </div>
         </div>
@@ -195,7 +205,7 @@ export function renderGuestView(container) {
         <div class="weather-checklist-box">
           <strong>🛡️ Site Lead Pre-Event Weather Checklist:</strong>
           <ul>
-            ${analysis.weatherAction.checklist.map(item => `<li>${item}</li>`).join('')}
+            ${analysis.weatherAction.checklist.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
           </ul>
         </div>
       </section>

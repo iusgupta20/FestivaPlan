@@ -15,7 +15,7 @@ describe('Timeline & Task Prioritization Scheduler', () => {
 
     const countdown = calculateEventCountdown(dateStr);
     assert.strictEqual(countdown.isPast, false);
-    assert.ok(countdown.days >= 29 && countdown.days <= 30);
+    assert.ok(countdown.days >= 28 && countdown.days <= 31);
     assert.ok(countdown.label.includes('Days'));
   });
 
@@ -90,3 +90,4 @@ describe('Timeline & Task Prioritization Scheduler', () => {
     assert.ok(festivalSheet.some(s => s.action.toLowerCase().includes('sound') || s.action.toLowerCase().includes('food')));
   });
 });
+

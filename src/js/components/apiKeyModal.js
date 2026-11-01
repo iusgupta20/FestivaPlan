@@ -6,6 +6,7 @@
 
 import { eventState } from '../state.js';
 import { aiEngine } from '../aiEngine.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 export function setupApiKeyModal() {
   const modal = document.querySelector('#modal-api-key');
@@ -53,7 +54,7 @@ export function setupApiKeyModal() {
       }
 
       testBtn.disabled = true;
-      testBtn.innerHTML = '<span class="spinner"></span> Testing connection...';
+      testBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Testing connection...';
       statusEl.innerHTML = '';
 
       try {
@@ -90,16 +91,12 @@ function updateHeaderBadge() {
   if (badge) {
     if (eventState.hasApiKey()) {
       badge.className = 'badge badge-success';
-      badge.innerHTML = '✨ Gemini Live Active';
+      badge.textContent = '✨ Gemini Live Active';
     } else {
       badge.className = 'badge badge-teal';
-      badge.innerHTML = '🧠 Cognitive Engine (100% Offline Ready)';
+      badge.textContent = '🧠 Cognitive Engine (100% Offline Ready)';
     }
   }
-}
-
-function escapeHtml(str) {
-  return String(str || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function showToast(msg) {

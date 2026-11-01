@@ -7,12 +7,14 @@
 import { eventState } from '../state.js';
 import { analyzeBudgetHealth, solveWhatIfCostSurge, autoRebalanceBudget } from '../tradeoffOptimizer.js';
 import { aiEngine } from '../aiEngine.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 export function renderBudgetView(container) {
+  if (!container) return;
   const state = eventState.getState();
   const metrics = eventState.getBudgetMetrics();
   const health = analyzeBudgetHealth(state.totalBudget, state.budgetItems);
-  const cur = state.currency || '$';
+  const cur = escapeHtml(state.currency || '$');
 
   container.innerHTML = `
     <div class="budget-container animate-fade-in">
@@ -26,7 +28,7 @@ export function renderBudgetView(container) {
         <div class="kpi-card ${metrics.isOverbudget ? 'kpi-danger' : 'kpi-success'}">
           <span class="kpi-label">Allocated / Actual</span>
           <div class="kpi-value">${cur}${metrics.allocated.toLocaleString()}</div>
-          <span class="kpi-hint">${((metrics.allocated / metrics.total) * 100).toFixed(1)}% of total authorized</span>
+          <span class="kpi-hint">${((metrics.allocated / (metrics.total || 1)) * 100).toFixed(1)}% of total authorized</span>
         </div>
         <div class="kpi-card ${metrics.isOverbudget ? 'kpi-danger' : 'kpi-neutral'}">
           <span class="kpi-label">${metrics.isOverbudget ? 'Deficit (Over Budget)' : 'Remaining Buffer'}</span>
@@ -38,7 +40,7 @@ export function renderBudgetView(container) {
         <div class="kpi-card">
           <span class="kpi-label">Per-Guest Velocity</span>
           <div class="kpi-value">${cur}${metrics.perGuestSpend.toLocaleString()}</div>
-          <span class="kpi-hint">Across ${state.guestCount} invited guests</span>
+          <span class="kpi-hint">Across ${escapeHtml(state.guestCount)} invited guests</span>
         </div>
       </section>
 
@@ -50,7 +52,7 @@ export function renderBudgetView(container) {
             <h4>Budget Exceeded by ${cur}${metrics.overbudgetAmount.toLocaleString()} (${metrics.overbudgetPercent}%)</h4>
             <p>Your current planned expenses exceed the allocated cap. Use our mathematical constraint optimizer to restore balance without losing core quality.</p>
           </div>
-          <button class="btn btn-warning" id="btn-auto-rebalance">
+          <button class="btn btn-warning" id="btn-auto-rebalance" aria-label="Auto-Rebalance Budget with Mathematical AI">
             ⚡ Auto-Rebalance Budget with AI
           </button>
         </div>
@@ -66,7 +68,7 @@ export function renderBudgetView(container) {
               <p class="section-desc">Experience real-world decision making: test price spikes (e.g. caterer fee increase) and let AI generate tactical offset trade-offs.</p>
             </div>
           </div>
-          <button class="btn btn-outline btn-sm" id="btn-export-budget-csv">
+          <button class="btn btn-outline btn-sm" id="btn-export-budget-csv" aria-label="Export Budget Allocations as CSV">
             📥 Export Budget CSV
           </button>
         </div>
@@ -76,21 +78,21 @@ export function renderBudgetView(container) {
             <label for="select-surge-category">Surge In Category:</label>
             <select id="select-surge-category" class="form-select">
               ${(state.budgetItems || []).map(item => `
-                <option value="${item.id}">${item.category} (Current: ${cur}${Number(item.actual || item.target).toLocaleString()})</option>
+                <option value="${escapeHtml(item.id)}">${escapeHtml(item.category)} (Current: ${cur}${Number(item.actual || item.target).toLocaleString()})</option>
               `).join('')}
             </select>
           </div>
           <div class="form-group">
             <label for="input-surge-amount">Cost Surge Amount (${cur}):</label>
-            <input type="number" id="input-surge-amount" class="form-input" value="${state.type === 'wedding' ? 50000 : 1000}" step="500" min="100">
+            <input type="number" id="input-surge-amount" class="form-input" value="${state.type === 'wedding' ? 50000 : 1000}" step="500" min="100" aria-label="Cost surge amount">
           </div>
-          <button class="btn btn-primary" id="btn-run-what-if">
+          <button class="btn btn-primary" id="btn-run-what-if" aria-label="Solve Trade-Offs">
             <span>⚡</span> Solve Trade-Offs
           </button>
         </div>
 
         <!-- Simulation Results Area -->
-        <div id="what-if-results-container" class="what-if-results hidden"></div>
+        <div id="what-if-results-container" class="what-if-results hidden" aria-live="polite"></div>
       </section>
 
       <!-- Category Allocation Breakdown Table -->
@@ -104,7 +106,7 @@ export function renderBudgetView(container) {
             </div>
           </div>
           <div class="header-actions">
-            <button class="btn btn-secondary btn-sm" id="btn-reset-targets">
+            <button class="btn btn-secondary btn-sm" id="btn-reset-targets" aria-label="Reset All Allocations to Baseline Targets">
               ↺ Reset to Target Baseline
             </button>
           </div>
@@ -112,6 +114,10 @@ export function renderBudgetView(container) {
 
         <div class="budget-items-list" id="budget-items-list">
           ${(state.budgetItems || []).map(item => {
+            const safeCategory = escapeHtml(item.category);
+            const safeNotes = escapeHtml(item.notes || '');
+            const safePriority = escapeHtml(item.priority);
+            const safeFlexibility = escapeHtml(item.flexibility);
             const actual = Number(item.actual) || Number(item.target) || 0;
             const target = Number(item.target) || 0;
             const variance = actual - target;
@@ -119,16 +125,16 @@ export function renderBudgetView(container) {
             const percentOfTotal = ((actual / (state.totalBudget || 1)) * 100).toFixed(1);
 
             return `
-              <div class="budget-item-row" data-id="${item.id}">
+              <div class="budget-item-row" data-id="${escapeHtml(item.id)}">
                 <div class="item-meta">
                   <div class="item-title-row">
-                    <strong class="item-name">${item.category}</strong>
+                    <strong class="item-name">${safeCategory}</strong>
                     <div class="item-badges">
-                      <span class="badge ${getPriorityBadge(item.priority)}">${item.priority} Priority</span>
-                      <span class="badge ${getFlexibilityBadge(item.flexibility)}">${item.flexibility} Flexibility</span>
+                      <span class="badge ${getPriorityBadge(item.priority)}">${safePriority} Priority</span>
+                      <span class="badge ${getFlexibilityBadge(item.flexibility)}">${safeFlexibility} Flexibility</span>
                     </div>
                   </div>
-                  <p class="item-notes">${item.notes || ''}</p>
+                  <p class="item-notes">${safeNotes}</p>
                 </div>
 
                 <div class="item-slider-col">
@@ -136,15 +142,15 @@ export function renderBudgetView(container) {
                     <span>Target: ${cur}${target.toLocaleString()}</span>
                     <span class="item-actual-text"><strong>${cur}${actual.toLocaleString()}</strong> (${percentOfTotal}%)</span>
                   </div>
-                  <input type="range" class="slider-input" min="0" max="${maxSlider}" step="${state.type === 'wedding' ? 5000 : 100}" value="${actual}" data-id="${item.id}">
+                  <input type="range" class="slider-input" min="0" max="${maxSlider}" step="${state.type === 'wedding' ? 5000 : 100}" value="${actual}" data-id="${escapeHtml(item.id)}" aria-label="${safeCategory} allocation slider" aria-valuemin="0" aria-valuemax="${maxSlider}" aria-valuenow="${actual}">
                 </div>
 
                 <div class="item-input-col">
                   <div class="input-prefix-wrap">
-                    <span class="input-prefix">${cur}</span>
-                    <input type="number" class="actual-input form-input form-input-sm" value="${actual}" data-id="${item.id}">
+                    <span class="input-prefix" aria-hidden="true">${cur}</span>
+                    <input type="number" class="actual-input form-input form-input-sm" value="${actual}" data-id="${escapeHtml(item.id)}" aria-label="${safeCategory} allocated amount">
                   </div>
-                  <div class="variance-tag ${variance > 0 ? 'var-over' : variance < 0 ? 'var-under' : 'var-even'}">
+                  <div class="variance-tag ${variance > 0 ? 'var-over' : variance < 0 ? 'var-under' : 'var-even'}" aria-label="Variance: ${variance}">
                     ${variance > 0 ? `+${cur}${variance.toLocaleString()}` : variance < 0 ? `-${cur}${Math.abs(variance).toLocaleString()}` : 'On Target'}
                   </div>
                 </div>
@@ -156,50 +162,49 @@ export function renderBudgetView(container) {
     </div>
   `;
 
-  // Attach event handlers
-  // Auto-Rebalance Button
-  const autoRebalBtn = container.querySelector('#btn-auto-rebalance');
-  if (autoRebalBtn) {
-    autoRebalBtn.addEventListener('click', () => {
-      const rebalanced = autoRebalanceBudget(state.budgetItems, state.totalBudget);
-      eventState.setBudgetItems(rebalanced);
-      showToast('✅ Budget successfully rebalanced to 100% capacity using priority constraints!');
-      renderBudgetView(container);
-    });
-  }
-
-  // Reset to Target
-  const resetBtn = container.querySelector('#btn-reset-targets');
-  if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-      const resetItems = state.budgetItems.map(i => ({
-        ...i,
-        actual: Number(i.target) || 0
-      }));
-      eventState.setBudgetItems(resetItems);
-      showToast('↺ All allocations restored to baseline targets.');
-      renderBudgetView(container);
-    });
-  }
-
-  // Live Slider & Input Sync
-  container.querySelectorAll('.slider-input').forEach(slider => {
+  // Slider change listeners
+  const sliders = container.querySelectorAll('.slider-input');
+  sliders.forEach(slider => {
     slider.addEventListener('input', (e) => {
       const id = slider.getAttribute('data-id');
       const val = Number(e.target.value);
       eventState.updateBudgetItem(id, { actual: val });
-      renderBudgetView(container);
     });
   });
 
-  container.querySelectorAll('.actual-input').forEach(inp => {
-    inp.addEventListener('change', (e) => {
-      const id = inp.getAttribute('data-id');
-      const val = Math.max(0, Number(e.target.value));
+  // Number input change listeners
+  const numberInputs = container.querySelectorAll('.actual-input');
+  numberInputs.forEach(input => {
+    input.addEventListener('change', (e) => {
+      const id = input.getAttribute('data-id');
+      const val = Number(e.target.value) || 0;
       eventState.updateBudgetItem(id, { actual: val });
-      renderBudgetView(container);
     });
   });
+
+  // Auto-Rebalance Button
+  const rebalanceBtn = container.querySelector('#btn-auto-rebalance');
+  if (rebalanceBtn) {
+    rebalanceBtn.addEventListener('click', () => {
+      const rebalanced = autoRebalanceBudget(state.budgetItems, state.totalBudget);
+      for (const item of rebalanced) {
+        eventState.updateBudgetItem(item.id, { actual: item.actual });
+      }
+      showToast('⚡ Budget auto-rebalanced! Total actual spending returned to authorized cap.');
+    });
+  }
+
+  // Reset Targets Button
+  const resetBtn = container.querySelector('#btn-reset-targets');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      for (const item of state.budgetItems) {
+        eventState.updateBudgetItem(item.id, { actual: item.target });
+      }
+      showToast('↺ Allocations reset to initial target baselines.');
+      renderBudgetView(container);
+    });
+  }
 
   // What-If Tradeoff Simulator
   const runWhatIfBtn = container.querySelector('#btn-run-what-if');
@@ -210,7 +215,7 @@ export function renderBudgetView(container) {
       const surgeAmount = Number(container.querySelector('#input-surge-amount').value) || 0;
 
       runWhatIfBtn.disabled = true;
-      runWhatIfBtn.innerHTML = '<span class="spinner"></span> Simulating Trade-Offs...';
+      runWhatIfBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Simulating Trade-Offs...';
 
       try {
         const tradeOffResult = solveWhatIfCostSurge(state.budgetItems, state.totalBudget, categoryId, surgeAmount);
@@ -240,34 +245,36 @@ function renderWhatIfResults(container, result, cur, parentView) {
     return;
   }
 
+  const safeTargetCat = escapeHtml(result.targetCategory);
+
   container.innerHTML = `
     <div class="what-if-packages-wrapper animate-fade-in">
       <div class="what-if-header">
-        <h4>⚡ AI Trade-Off Packages to Absorb +${cur}${result.surgeAmount.toLocaleString()} in ${result.targetCategory}:</h4>
+        <h4>⚡ AI Trade-Off Packages to Absorb +${cur}${result.surgeAmount.toLocaleString()} in ${safeTargetCat}:</h4>
         <p>Choose an optimal compromise strategy to automatically reallocate vendor allocations:</p>
       </div>
       <div class="packages-grid">
         ${result.packages.map(pkg => `
-          <div class="package-card" id="${pkg.id}">
+          <div class="package-card" id="${escapeHtml(pkg.id)}">
             <div class="pkg-header">
-              <span class="pkg-tag">${pkg.tag}</span>
-              <h5>${pkg.name}</h5>
-              <p class="pkg-summary">${pkg.summary}</p>
+              <span class="pkg-tag">${escapeHtml(pkg.tag)}</span>
+              <h5>${escapeHtml(pkg.name)}</h5>
+              <p class="pkg-summary">${escapeHtml(pkg.summary)}</p>
             </div>
             <div class="pkg-cuts-list">
               <strong>Proposed Reallocations:</strong>
               <ul>
                 ${pkg.cuts.map(cut => `
                   <li>
-                    <span class="cut-category"><strong>${cut.category}</strong>: -${cur}${cut.cutAmount.toLocaleString()}</span>
-                    <span class="cut-tactical">${cut.tacticalAction}</span>
+                    <span class="cut-category"><strong>${escapeHtml(cut.category)}</strong>: -${cur}${cut.cutAmount.toLocaleString()}</span>
+                    <span class="cut-tactical">${escapeHtml(cut.tacticalAction)}</span>
                   </li>
                 `).join('')}
               </ul>
             </div>
             <div class="pkg-footer">
               <span class="pkg-savings">Total Offset: <strong>${cur}${pkg.totalSavings.toLocaleString()}</strong></span>
-              <button class="btn btn-primary btn-sm btn-apply-pkg" data-pkg-id="${pkg.id}">
+              <button class="btn btn-primary btn-sm btn-apply-pkg" data-pkg-id="${escapeHtml(pkg.id)}" aria-label="Apply ${escapeHtml(pkg.name)}">
                 Apply This Package
               </button>
             </div>
@@ -302,7 +309,6 @@ function renderWhatIfResults(container, result, cur, parentView) {
 }
 
 function exportBudgetCSV(state) {
-  const cur = state.currency || '$';
   let csv = 'Category,Priority,Flexibility,Target Allocation,Actual Planned,Variance,Notes\n';
 
   for (const item of (state.budgetItems || [])) {

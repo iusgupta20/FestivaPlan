@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://generativelanguage.googleapis.com; img-src 'self' data: https:;">
   <meta name="theme-color" content="#FAF9F6">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -23,13 +24,16 @@
   <link rel="stylesheet" href="/src/styles/main.css">
 </head>
 <body>
+  <!-- Accessible Skip Link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <!-- Header Bar -->
   <header class="site-header" role="banner">
     <div class="header-container">
       <div class="brand-wrapper">
         <span class="brand-logo-sparkle" aria-hidden="true">✨</span>
         <div>
-          <a href="#" class="brand-title" id="brand-logo-link">FestivaPlan AI</a>
+          <a href="#" class="brand-title" id="brand-logo-link" aria-label="FestivaPlan AI Home">FestivaPlan AI</a>
           <span class="brand-badge">Challenge 5</span>
         </div>
       </div>
@@ -59,22 +63,22 @@
   <nav class="site-nav-bar" role="navigation" aria-label="Main Navigation">
     <div class="nav-container" role="tablist">
       <button class="nav-tab active" data-tab="blueprint" id="tab-blueprint" role="tab" aria-selected="true" aria-controls="main-content">
-        <span>🌟</span> Event Blueprint & AI
+        <span aria-hidden="true">🌟</span> Event Blueprint & AI
       </button>
       <button class="nav-tab" data-tab="budget" id="tab-budget" role="tab" aria-selected="false" aria-controls="main-content">
-        <span>💰</span> Budget & Tradeoffs
+        <span aria-hidden="true">💰</span> Budget & Tradeoffs
       </button>
       <button class="nav-tab" data-tab="vendor" id="tab-vendor" role="tab" aria-selected="false" aria-controls="main-content">
-        <span>🤝</span> Vendor Coordination
+        <span aria-hidden="true">🤝</span> Vendor Coordination
       </button>
       <button class="nav-tab" data-tab="timeline" id="tab-timeline" role="tab" aria-selected="false" aria-controls="main-content">
-        <span>⏱️</span> Timeline & Priority
+        <span aria-hidden="true">⏱️</span> Timeline & Priority
       </button>
       <button class="nav-tab" data-tab="guests" id="tab-guests" role="tab" aria-selected="false" aria-controls="main-content">
-        <span>👥</span> Guests & Inclusivity
+        <span aria-hidden="true">👥</span> Guests & Inclusivity
       </button>
       <button class="nav-tab" data-tab="copilot" id="tab-copilot" role="tab" aria-selected="false" aria-controls="main-content">
-        <span>🤖</span> AI Event Copilot
+        <span aria-hidden="true">🤖</span> AI Event Copilot
       </button>
     </div>
   </nav>
@@ -85,7 +89,7 @@
   </main>
 
   <!-- Modal: Google Gemini API Key Settings -->
-  <dialog class="festiva-modal" id="modal-api-key" aria-labelledby="modal-api-title">
+  <dialog class="festiva-modal" id="modal-api-key" role="dialog" aria-modal="true" aria-labelledby="modal-api-title">
     <div class="modal-box">
       <div class="modal-header">
         <h3 id="modal-api-title">⚙️ Google Gemini GenAI Configuration</h3>
@@ -102,7 +106,7 @@
             🔒 Stored only in browser <code>sessionStorage</code>. Never persisted to disk, database, or git repository.
           </small>
         </div>
-        <div id="api-test-status" style="margin-bottom: 0.85rem; font-size: 0.85rem;"></div>
+        <div id="api-test-status" style="margin-bottom: 0.85rem; font-size: 0.85rem;" role="status" aria-live="polite"></div>
         <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
           <button type="button" class="btn btn-outline btn-sm" id="btn-test-api-key">
             🧪 Test Live Connection
@@ -119,7 +123,7 @@
   </dialog>
 
   <!-- Modal: Export & Persistence -->
-  <dialog class="festiva-modal" id="modal-export" aria-labelledby="modal-export-title">
+  <dialog class="festiva-modal" id="modal-export" role="dialog" aria-modal="true" aria-labelledby="modal-export-title">
     <div class="modal-box">
       <div class="modal-header">
         <h3 id="modal-export-title">💾 Export, Backup & Run-Sheet Printing</h3>
@@ -143,7 +147,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="btn-close-export-dialog" onclick="document.querySelector('#modal-export').close()">Close</button>
+        <button type="button" class="btn btn-secondary" id="btn-close-export-dialog">Close</button>
       </div>
     </div>
   </dialog>

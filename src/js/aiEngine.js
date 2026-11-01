@@ -91,7 +91,21 @@ Detail which categories to trim, by how much, and what tactical compromise is ma
   /**
    * Conversational AI Copilot for interactive queries
    */
-  async chatWithCopilot(event, userQuestion, chatHistory = [], apiKey = '') {
+  async chatWithCopilot(arg1, arg2, arg3 = [], arg4 = '') {
+    let event, userQuestion, chatHistory, apiKey;
+    if (typeof arg1 === 'string' && typeof arg2 === 'object') {
+      userQuestion = arg1;
+      event = arg2 || {};
+      chatHistory = Array.isArray(arg4) ? arg4 : (Array.isArray(arg3) ? arg3 : []);
+      apiKey = typeof arg3 === 'string' ? arg3 : (typeof arg4 === 'string' ? arg4 : '');
+    } else {
+      event = arg1 || {};
+      userQuestion = arg2 || '';
+      chatHistory = Array.isArray(arg3) ? arg3 : [];
+      apiKey = typeof arg4 === 'string' ? arg4 : '';
+    }
+    apiKey = typeof apiKey === 'string' ? apiKey : '';
+
     const prompt = `You are FestivaPlan AI, a sharp, empathetic, and highly resourceful celebration planner.
 Context:
 - Event: "${event.title}" (${event.type})

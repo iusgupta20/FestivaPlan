@@ -392,7 +392,7 @@ export const EVENT_PRESETS = {
   }
 };
 
-class EventStateManager {
+export class EventStateManager {
   constructor() {
     this.storageKey = 'festivaplan_active_event_v1';
     this.listeners = new Map();
@@ -401,25 +401,28 @@ class EventStateManager {
 
   loadInitialState() {
     try {
-      const stored = localStorage.getItem(this.storageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed && parsed.id && parsed.totalBudget) {
-          return parsed;
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem(this.storageKey);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.id && parsed.totalBudget) {
+            return parsed;
+          }
         }
       }
     } catch (e) {
-      console.warn('Could not read from localStorage, using default preset.', e);
+      // Safe fallback
     }
-    // Default to the rich wedding preset
     return JSON.parse(JSON.stringify(EVENT_PRESETS.wedding));
   }
 
   save() {
     try {
-      localStorage.setItem(this.storageKey, JSON.stringify(this.state));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.storageKey, JSON.stringify(this.state));
+      }
     } catch (e) {
-      console.error('Error saving state to localStorage', e);
+      // Safe fallback
     }
   }
 
@@ -503,6 +506,10 @@ class EventStateManager {
     return newVendor;
   }
 
+  updateVendorStatus(id, status) {
+    return this.updateVendor(id, { status });
+  }
+
   updateVendor(id, updates) {
     const vendor = this.state.vendors.find(v => v.id === id);
     if (vendor) {
@@ -577,14 +584,21 @@ class EventStateManager {
 
   // --- API Key Management (Security Conscious) ---
   getApiKey() {
-    return sessionStorage.getItem('festivaplan_gemini_api_key') || '';
+    if (typeof sessionStorage !== 'undefined') {
+      return sessionStorage.getItem('festivaplan_gemini_api_key') || '';
+    }
+    return this._mockApiKey || '';
   }
 
   setApiKey(key) {
-    if (!key) {
-      sessionStorage.removeItem('festivaplan_gemini_api_key');
+    if (typeof sessionStorage !== 'undefined') {
+      if (!key) {
+        sessionStorage.removeItem('festivaplan_gemini_api_key');
+      } else {
+        sessionStorage.setItem('festivaplan_gemini_api_key', key.trim());
+      }
     } else {
-      sessionStorage.setItem('festivaplan_gemini_api_key', key.trim());
+      this._mockApiKey = key ? key.trim() : '';
     }
     this.emit('apiKeyChanged', !!key);
   }
