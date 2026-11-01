@@ -5,7 +5,7 @@ import { GenAIEngine } from '../src/js/aiEngine.js';
 describe('Security, Responsible AI & Input Sanitization', () => {
   it('does not leak or expose API keys in prompt audit output', async () => {
     const engine = new GenAIEngine();
-    const fakeKey = 'AIzaSy_FAKE_SECRET_KEY_12345';
+    const fakeKey = 'TEST_DUMMY_KEY_FOR_UNIT_TEST_ONLY';
     const mockEvent = {
       title: 'Secret Gala',
       type: 'corporate',

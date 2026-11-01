@@ -114,8 +114,8 @@ npm test
 
 ### 1. Clone Repository & Install Dependencies
 ```bash
-git clone https://github.com/iusgupta20/celebration-event-planner.git
-cd celebration-event-planner
+git clone https://github.com/iusgupta20/FestivaPlan.git
+cd FestivaPlan
 npm install
 ```
 
